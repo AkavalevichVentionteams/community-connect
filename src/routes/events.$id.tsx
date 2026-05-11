@@ -10,14 +10,15 @@ export const Route = createFileRoute("/events/$id")({
   loader: async ({ params }) => {
     const { data } = await supabase
       .from("events")
-      .select("id,title,description,cover_url,starts_at,ends_at,visibility,state,hosts(name,slug,logo_url)")
+      .select("id,title,description,cover_url,starts_at,ends_at,visibility,state,hidden,hosts(name,slug,logo_url)")
       .eq("id", params.id)
       .maybeSingle();
     return { event: data };
   },
   head: ({ loaderData }) => {
     const ev: any = loaderData?.event;
-    if (!ev) return { meta: [{ title: "Event" }] };
+    if (!ev) return { meta: [{ title: "Event not found" }] };
+    if (ev.hidden) return { meta: [{ title: "Event unavailable" }] };
     const title = `${ev.title} — ${ev.hosts?.name ?? "Event"}`;
     const desc = (ev.description ?? "").slice(0, 160) || `${ev.title} on ${new Date(ev.starts_at).toLocaleString()}`;
     const img = ev.cover_url || ev.hosts?.logo_url;
@@ -43,6 +44,7 @@ function EventPage() {
   const { user } = useAuth();
   const nav = useNavigate();
   const [event, setEvent] = useState<any>(null);
+  const [notFound, setNotFound] = useState(false);
   const [host, setHost] = useState<any>(null);
   const [rsvp, setRsvp] = useState<any>(null);
   const [counts, setCounts] = useState({ going: 0, waitlist: 0 });
@@ -51,10 +53,12 @@ function EventPage() {
   const [submittedFb, setSubmittedFb] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [gallery, setGallery] = useState<any[]>([]);
+  const [reportOpen, setReportOpen] = useState<null | { kind: "event" } | { kind: "photo"; id: string }>(null);
+  const [reportReason, setReportReason] = useState("");
 
   async function load() {
     const { data: ev } = await supabase.from("events").select("*, hosts(*)").eq("id", id).maybeSingle();
-    if (!ev) return;
+    if (!ev) { setNotFound(true); return; }
     setEvent(ev);
     setHost(ev.hosts);
     if (user) {
@@ -92,6 +96,15 @@ function EventPage() {
     };
   }, [id, user?.id]);
 
+  if (notFound) {
+    return (
+      <div className="max-w-md mx-auto p-12 text-center">
+        <h1 className="text-2xl font-bold mb-2">Event not available</h1>
+        <p className="text-muted-foreground">This event may be unpublished, removed, or you don't have access to it.</p>
+        <Link to="/explore" className="inline-block mt-4 underline">Browse events</Link>
+      </div>
+    );
+  }
   if (!event) return <div className="p-8 text-center text-muted-foreground">Loading…</div>;
 
   const ended = isPast(event.ends_at);
@@ -154,18 +167,18 @@ function EventPage() {
     setPhotoFile(null);
   }
 
-  async function reportEvent() {
-    const reason = prompt("Why are you reporting this event?");
+  async function submitReport() {
+    if (!reportOpen) return;
+    const reason = reportReason.trim();
     if (!reason) return;
-    await supabase.from("reports").insert({ target_type: "event", target_id: id, reporter_id: user?.id ?? null, reason });
+    if (reportOpen.kind === "event") {
+      await supabase.from("reports").insert({ target_type: "event", target_id: id, reporter_id: user?.id ?? null, reason });
+    } else {
+      await supabase.from("reports").insert({ target_type: "photo", target_id: reportOpen.id, reporter_id: user?.id ?? null, reason });
+    }
     toast.success("Reported. Thank you.");
-  }
-
-  async function reportPhoto(photoId: string) {
-    const reason = prompt("Why are you reporting this photo?");
-    if (!reason) return;
-    await supabase.from("reports").insert({ target_type: "photo", target_id: photoId, reporter_id: user?.id ?? null, reason });
-    toast.success("Reported. Thank you.");
+    setReportOpen(null);
+    setReportReason("");
   }
 
   return (
@@ -193,6 +206,10 @@ function EventPage() {
         {counts.going} going · {counts.waitlist} waitlisted · capacity {event.capacity}
       </div>
 
+      {rsvp && rsvp.status === "cancelled" && (
+        <div className="mt-4 text-sm text-muted-foreground italic">You previously cancelled your RSVP.</div>
+      )}
+
       <div className="mt-6 flex gap-2 flex-wrap">
         {!ended && (!rsvp || rsvp.status === "cancelled") && (
           <button onClick={rsvpAction} className="px-5 py-2.5 rounded bg-primary text-primary-foreground font-medium">
@@ -205,7 +222,7 @@ function EventPage() {
         {rsvp && rsvp.status !== "cancelled" && (
           <button onClick={addCal} className="px-5 py-2.5 rounded border font-medium">Add to calendar</button>
         )}
-        <button onClick={reportEvent} className="px-5 py-2.5 rounded border text-sm text-muted-foreground">Report</button>
+        <button onClick={() => { setReportReason(""); setReportOpen({ kind: "event" }); }} className="px-5 py-2.5 rounded border text-sm text-muted-foreground">Report</button>
       </div>
 
       {rsvp && rsvp.status === "going" && qr && (
@@ -242,7 +259,7 @@ function EventPage() {
             <div key={p.id} className="relative group">
               <img src={p.photo_url} alt="" className="aspect-square object-cover rounded w-full" />
               <button
-                onClick={() => reportPhoto(p.id)}
+                onClick={() => { setReportReason(""); setReportOpen({ kind: "photo", id: p.id }); }}
                 className="absolute top-1 right-1 text-[10px] px-2 py-0.5 rounded bg-background/80 border opacity-0 group-hover:opacity-100 focus:opacity-100"
               >
                 Report
@@ -257,6 +274,26 @@ function EventPage() {
           </div>
         )}
       </section>
+
+      {reportOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setReportOpen(null)}>
+          <div className="bg-background rounded-lg p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-semibold text-lg mb-2">Report {reportOpen.kind}</h3>
+            <p className="text-sm text-muted-foreground mb-3">Tell us what's wrong. Hosts will review.</p>
+            <textarea
+              autoFocus
+              className="w-full border rounded p-2 min-h-24"
+              placeholder="Reason"
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+            />
+            <div className="flex justify-end gap-2 mt-3">
+              <button onClick={() => setReportOpen(null)} className="px-3 py-1.5 rounded border text-sm">Cancel</button>
+              <button onClick={submitReport} disabled={!reportReason.trim()} className="px-3 py-1.5 rounded bg-primary text-primary-foreground text-sm disabled:opacity-50">Submit report</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
