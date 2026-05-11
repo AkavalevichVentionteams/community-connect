@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { formatDateTime } from "@/lib/event-utils";
 import QRCode from "qrcode";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/tickets")({
   component: TicketsPage,
@@ -43,7 +44,24 @@ function TicketsPage() {
       .channel(`my-rsvps-${user.id}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "rsvps", filter: `user_id=eq.${user.id}` },
+        { event: "UPDATE", schema: "public", table: "rsvps", filter: `user_id=eq.${user.id}` },
+        (payload: any) => {
+          const oldStatus = payload.old?.status;
+          const newStatus = payload.new?.status;
+          if (oldStatus === "waitlist" && newStatus === "going") {
+            toast.success("You're in! Promoted from the waitlist.");
+          }
+          loadTickets(user.id);
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "rsvps", filter: `user_id=eq.${user.id}` },
+        () => loadTickets(user.id),
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "rsvps", filter: `user_id=eq.${user.id}` },
         () => loadTickets(user.id),
       )
       .subscribe();
