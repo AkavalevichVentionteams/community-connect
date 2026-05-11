@@ -109,10 +109,16 @@ function Section({ title, events, stats, slug, onPublish, onDuplicate, onExport 
       <div className="space-y-3">
         {events.map((e: any) => {
           const s = stats[e.id] || {};
+          const ended = isPast(e.ends_at);
           return (
             <div key={e.id} className="border rounded-lg p-4 bg-card flex flex-wrap items-center gap-4">
               <div className="flex-1 min-w-[200px]">
-                <Link to="/events/$id" params={{ id: e.id }} className="font-semibold hover:underline">{e.title}</Link>
+                <div className="flex items-center gap-2">
+                  <Link to="/events/$id" params={{ id: e.id }} className="font-semibold hover:underline">{e.title}</Link>
+                  {ended && (
+                    <span className="px-2 py-0.5 rounded-full bg-muted text-foreground text-[11px] font-medium">Ended</span>
+                  )}
+                </div>
                 <div className="text-xs text-muted-foreground">{formatDateTime(e.starts_at, e.timezone)} · {e.visibility} · {e.state}</div>
               </div>
               <div className="text-sm">
