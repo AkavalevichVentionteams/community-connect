@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDateTime, isPast, toCsv, downloadFile } from "@/lib/event-utils";
+import { formatDateTime, isPast, toCsv, downloadFile, formatCheckInTime } from "@/lib/event-utils";
 import { toast } from "sonner";
 import { HostRoleGate } from "@/components/HostRoleGate";
 
@@ -62,16 +62,16 @@ function DashboardBody({ slug, host }: { slug: string; host: { id: string; name:
     load();
   }
 
-  async function exportCsv(eventId: string, title: string) {
+  async function exportCsv(eventId: string, title: string, tz?: string) {
     const { data } = await supabase
       .from("rsvps")
       .select("status, checked_in_at, profiles:user_id(display_name,email)")
       .eq("event_id", eventId);
     const rows = (data ?? []).map((r: any) => ({
-      name: r.profiles?.display_name ?? "",
-      email: r.profiles?.email ?? "",
-      rsvp_status: r.status,
-      check_in_time: r.checked_in_at ?? "",
+      "Name": r.profiles?.display_name ?? "",
+      "Email": r.profiles?.email ?? "",
+      "RSVP status": r.status,
+      "Check-in time": formatCheckInTime(r.checked_in_at, tz),
     }));
     // Prepend UTF-8 BOM so Excel opens non-ASCII names correctly.
     const csv = "\ufeff" + toCsv(rows);
@@ -132,7 +132,7 @@ function Section({ title, events, stats, slug, onPublish, onDuplicate, onExport 
                   Copy link
                 </button>
                 <Link to="/host/$slug/checkin/$eventId" params={{ slug, eventId: e.id }} className="px-2 py-1 border rounded">Check-in</Link>
-                <button onClick={() => onExport(e.id, e.title)} className="px-2 py-1 border rounded">CSV</button>
+                <button onClick={() => onExport(e.id, e.title, e.timezone)} className="px-2 py-1 border rounded">CSV</button>
               </div>
             </div>
           );
