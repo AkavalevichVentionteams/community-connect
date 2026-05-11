@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 
-const defaultEv = {
+const defaultEv: any = {
   title: "",
   description: "",
   starts_at: "",
