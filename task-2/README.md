@@ -3,7 +3,7 @@
 A community events app for publishing events, collecting RSVPs, issuing QR tickets, and running door check-in.
 
 - Live deployment: https://buzz-host.lovable.app
-- Source repository: see top-level repo URL on the project page.
+- Source repository: https://github.com/AkavalevichVentionteams/community-connect
 - Submission folder: this `task-2/` directory contains the user guide (`README.md`), build report (`report.md`), and a sample CSV export (`example-rsvps.csv`). The application source lives at the repository root.
 
 ---
