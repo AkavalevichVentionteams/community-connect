@@ -62,7 +62,16 @@ A community events app for publishing events, collecting RSVPs, issuing QR ticke
 RSVP exports use exactly these columns:
 
 ```
-name,email,rsvp_status,check_in_time
+Name,Email,RSVP status,Check-in time
 ```
 
-`check_in_time` is ISO 8601 UTC or empty. The file is UTF-8 with BOM so Excel and Google Sheets open accented names cleanly. See `example-rsvps.csv`.
+`Check-in time` is `YYYY-MM-DD HH:MM:SS` in the event's time zone (empty if the attendee never checked in). The file is UTF-8 with BOM so Excel and Google Sheets open accented names cleanly. See `example-rsvps.csv`.
+
+## Demo credentials
+
+A demo host owner is seeded so reviewers can exercise the host flows immediately:
+
+- **Email:** `demo@communa.app`
+- **Password:** `CommunaDemo!2026`
+
+This account owns all five seeded hosts (Community Builders SF, Brooklyn Art Collective, Austin Tech Founders, Portland Climate Lab, Berlin Wellness Studio) so it can access every dashboard, CSV export, gallery queue, reports queue, and check-in page.
