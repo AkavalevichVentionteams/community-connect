@@ -73,7 +73,9 @@ function DashboardBody({ slug, host }: { slug: string; host: { id: string; name:
       rsvp_status: r.status,
       check_in_time: r.checked_in_at ?? "",
     }));
-    downloadFile(`${title.replace(/\W+/g, "_")}-rsvps.csv`, toCsv(rows.length ? rows : [{ name: "", email: "", rsvp_status: "", check_in_time: "" }]), "text/csv");
+    // Prepend UTF-8 BOM so Excel opens non-ASCII names correctly.
+    const csv = "\ufeff" + toCsv(rows.length ? rows : [{ name: "", email: "", rsvp_status: "", check_in_time: "" }]);
+    downloadFile(`${title.replace(/\W+/g, "_")}-rsvps.csv`, csv, "text/csv;charset=utf-8");
   }
 
   const upcoming = events.filter((e) => !isPast(e.ends_at));
