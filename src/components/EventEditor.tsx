@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useNavigate } from "@tanstack/react-router";
 
 const defaultEv: any = {
   title: "",
@@ -20,6 +22,7 @@ const defaultEv: any = {
 
 export default function EventEditor({ slug, eventId, onSaved }: { slug: string; eventId?: string; onSaved?: (id: string) => void }) {
   const { user } = useAuth();
+  const nav = useNavigate();
   const [hostId, setHostId] = useState<string | null>(null);
   const [form, setForm] = useState(defaultEv);
   const [busy, setBusy] = useState(false);
@@ -76,6 +79,23 @@ export default function EventEditor({ slug, eventId, onSaved }: { slug: string; 
     if (state) setForm((s: any) => ({ ...s, state }));
   }
 
+  async function duplicate() {
+    if (!eventId || !hostId) return;
+    setBusy(true);
+    const { data: src, error: e1 } = await supabase.from("events").select("*").eq("id", eventId).maybeSingle();
+    if (e1 || !src) { setBusy(false); return toast.error(e1?.message ?? "Not found"); }
+    const copy: any = { ...src };
+    delete copy.id; delete copy.created_at; delete copy.updated_at;
+    copy.title = `${src.title} (copy)`;
+    copy.state = "draft";
+    copy.is_paid = false;
+    const { data, error } = await supabase.from("events").insert(copy).select().single();
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Duplicated as draft");
+    nav({ to: "/host/$slug/events/$id/edit", params: { slug, id: data.id } });
+  }
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-3">
       <h1 className="text-2xl font-bold">{eventId ? "Edit event" : "New event"}</h1>
@@ -99,13 +119,23 @@ export default function EventEditor({ slug, eventId, onSaved }: { slug: string; 
             <option value="unlisted">Unlisted (link-only)</option>
           </select>
         </label>
-        <label className="text-sm flex items-center gap-2" title="Paid events coming soon">
-          <span className="text-muted-foreground">Free</span>
-          <input type="radio" checked readOnly />
-          <span className="text-muted-foreground">Paid</span>
-          <input type="radio" disabled title="Coming soon" />
-          <span className="text-xs text-muted-foreground italic">(Paid: Coming soon)</span>
-        </label>
+        <TooltipProvider>
+          <div className="text-sm flex items-center gap-3 border rounded px-3 py-1.5">
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input type="radio" name="pricing" checked readOnly />
+              <span>Free</span>
+            </label>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <label className="flex items-center gap-1.5 opacity-50 cursor-not-allowed">
+                  <input type="radio" name="pricing" disabled />
+                  <span>Paid</span>
+                </label>
+              </TooltipTrigger>
+              <TooltipContent>Coming soon</TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
       </div>
 
       <div className="flex gap-2 pt-2">
@@ -113,6 +143,9 @@ export default function EventEditor({ slug, eventId, onSaved }: { slug: string; 
         <button disabled={busy} onClick={() => save("published")} className="px-4 py-2 rounded bg-primary text-primary-foreground">Publish</button>
         {eventId && form.state === "published" && (
           <button disabled={busy} onClick={() => save("draft")} className="px-4 py-2 border rounded">Unpublish</button>
+        )}
+        {eventId && (
+          <button disabled={busy} onClick={duplicate} className="px-4 py-2 border rounded">Duplicate</button>
         )}
       </div>
     </div>
