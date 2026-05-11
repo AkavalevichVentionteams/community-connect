@@ -39,6 +39,21 @@ function CheckinBody({ eventId }: { eventId: string }) {
   }
   useEffect(() => { load(); }, [eventId]);
 
+  // Live counters: refresh when any RSVP for this event changes (other checkers, undos, new RSVPs).
+  useEffect(() => {
+    const ch = supabase
+      .channel(`checkin-${eventId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "rsvps", filter: `event_id=eq.${eventId}` },
+        () => load(),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [eventId]);
+
   async function checkIn(c?: string) {
     const trimmed = (c ?? code).trim();
     if (!trimmed) return;
@@ -72,7 +87,12 @@ function CheckinBody({ eventId }: { eventId: string }) {
       <p className="text-muted-foreground mb-6">Check-in</p>
 
       <div className="mb-4 p-4 rounded bg-card border">
-        <div className="text-3xl font-bold">{counts.checkedIn} <span className="text-base text-muted-foreground">/ {counts.going} going</span></div>
+        <div className="text-3xl font-bold">
+          {counts.checkedIn} <span className="text-base text-muted-foreground">/ {counts.going} going</span>
+        </div>
+        <div className="text-sm text-muted-foreground mt-1">
+          {Math.max(0, counts.going - counts.checkedIn)} remaining
+        </div>
       </div>
 
       <form onSubmit={(e) => { e.preventDefault(); checkIn(); }} className="flex gap-2 mb-4">
