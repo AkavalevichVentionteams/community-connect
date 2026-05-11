@@ -316,22 +316,28 @@ export type Database = {
       host_invites: {
         Row: {
           created_at: string
+          expires_at: string
           host_id: string
           id: string
+          revoked_at: string | null
           role: Database["public"]["Enums"]["member_role"]
           token: string
         }
         Insert: {
           created_at?: string
+          expires_at?: string
           host_id: string
           id?: string
+          revoked_at?: string | null
           role: Database["public"]["Enums"]["member_role"]
           token: string
         }
         Update: {
           created_at?: string
+          expires_at?: string
           host_id?: string
           id?: string
+          revoked_at?: string | null
           role?: Database["public"]["Enums"]["member_role"]
           token?: string
         }

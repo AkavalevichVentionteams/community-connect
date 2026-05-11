@@ -49,7 +49,8 @@ function NewHostPage() {
       <h1 className="text-2xl font-bold mb-6">Become a host</h1>
       <form onSubmit={submit} className="space-y-3">
         <input className="w-full border rounded px-3 py-2" placeholder="Host / organization name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-        <textarea className="w-full border rounded px-3 py-2" placeholder="Short bio" value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} />
+        <textarea className="w-full border rounded px-3 py-2" placeholder="Short bio" maxLength={280} value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} />
+        <div className="text-xs text-muted-foreground -mt-2">{form.bio.length}/280</div>
         <input className="w-full border rounded px-3 py-2" type="email" placeholder="Contact email" required value={form.contact_email} onChange={(e) => setForm({ ...form, contact_email: e.target.value })} />
         <label className="block text-sm">Logo
           <input type="file" accept="image/*" onChange={(e) => e.target.files && uploadLogo(e.target.files[0])} />

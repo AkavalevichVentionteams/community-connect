@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import {
   Outlet,
   Link,
@@ -75,18 +76,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "AIChallenge2.0Task-2AKavalevich" },
-      { name: "description", content: "Community Connect is a lightweight platform for hosting and attending free community events." },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "AIChallenge2.0Task-2AKavalevich" },
-      { property: "og:description", content: "Community Connect is a lightweight platform for hosting and attending free community events." },
+      { title: "Communa — Community events" },
+      { name: "description", content: "Communa is a lightweight platform for hosting and attending free community events." },
+      { property: "og:title", content: "Communa — Community events" },
+      { property: "og:description", content: "Communa is a lightweight platform for hosting and attending free community events." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "AIChallenge2.0Task-2AKavalevich" },
-      { name: "twitter:description", content: "Community Connect is a lightweight platform for hosting and attending free community events." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5fd490e7-9413-4dd0-8fe3-3acd67241fa1/id-preview-91b04318--86567afc-0881-465c-bda8-69a84882bfbd.lovable.app-1778501127788.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5fd490e7-9413-4dd0-8fe3-3acd67241fa1/id-preview-91b04318--86567afc-0881-465c-bda8-69a84882bfbd.lovable.app-1778501127788.png" },
+      { name: "twitter:title", content: "Communa — Community events" },
+      { name: "twitter:description", content: "Communa is a lightweight platform for hosting and attending free community events." },
     ],
     links: [
       {
@@ -133,6 +130,17 @@ function RootComponent() {
 
 function SiteHeader() {
   const { user } = useAuth();
+  const [hasRoles, setHasRoles] = useState(false);
+  useEffect(() => {
+    if (!user) { setHasRoles(false); return; }
+    (async () => {
+      const [{ count: memCount }, { count: ownCount }] = await Promise.all([
+        supabase.from("host_members").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("hosts").select("id", { count: "exact", head: true }).eq("owner_id", user.id),
+      ]);
+      setHasRoles((memCount ?? 0) + (ownCount ?? 0) > 0);
+    })();
+  }, [user?.id]);
   return (
     <header className="border-b bg-card/50 backdrop-blur sticky top-0 z-40">
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-4">
@@ -141,9 +149,9 @@ function SiteHeader() {
         </Link>
         <nav className="flex gap-4 text-sm">
           <Link to="/explore" activeProps={{ className: "font-semibold" }}>Explore</Link>
-          {user && <Link to="/tickets" activeProps={{ className: "font-semibold" }}>My Tickets</Link>}
-          {user && <Link to="/my-events" activeProps={{ className: "font-semibold" }}>My Events</Link>}
-          {user && <Link to="/host/new" activeProps={{ className: "font-semibold" }}>Become a Host</Link>}
+          {user && <Link to="/tickets" activeProps={{ className: "font-semibold" }}>My tickets</Link>}
+          {user && hasRoles && <Link to="/my-events" activeProps={{ className: "font-semibold" }}>My events</Link>}
+          {user && !hasRoles && <Link to="/host/new" activeProps={{ className: "font-semibold" }}>Become a host</Link>}
         </nav>
         <div className="ml-auto flex items-center gap-3 text-sm">
           {user ? (

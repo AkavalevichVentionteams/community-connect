@@ -118,7 +118,18 @@ export default function EventEditor({ slug, eventId, onSaved }: { slug: string; 
         <label className="text-sm">Starts<input className="w-full border rounded px-3 py-2" type="datetime-local" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} /></label>
         <label className="text-sm">Ends<input className="w-full border rounded px-3 py-2" type="datetime-local" value={form.ends_at} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} /></label>
       </div>
-      <input className="w-full border rounded px-3 py-2" placeholder="Time zone (e.g. America/New_York)" value={form.timezone} onChange={(e) => setForm({ ...form, timezone: e.target.value })} />
+      <label className="text-sm block">Time zone
+        <select
+          className="w-full border rounded px-3 py-2 mt-1"
+          value={form.timezone}
+          onChange={(e) => setForm({ ...form, timezone: e.target.value })}
+        >
+          {((Intl as any).supportedValuesOf?.("timeZone") as string[] | undefined ?? [
+            "UTC","America/New_York","America/Chicago","America/Denver","America/Los_Angeles",
+            "Europe/London","Europe/Berlin","Europe/Paris","Europe/Madrid","Asia/Tokyo","Asia/Singapore","Australia/Sydney",
+          ]).map((tz) => <option key={tz} value={tz}>{tz}</option>)}
+        </select>
+      </label>
       <input className="w-full border rounded px-3 py-2" placeholder="Venue address" value={form.venue ?? ""} onChange={(e) => setForm({ ...form, venue: e.target.value })} />
       <input className="w-full border rounded px-3 py-2" placeholder="Online link (optional)" value={form.online_link ?? ""} onChange={(e) => setForm({ ...form, online_link: e.target.value })} />
       <label className="text-sm block">Capacity<input className="w-full border rounded px-3 py-2" type="number" min={1} value={form.capacity} onChange={(e) => setForm({ ...form, capacity: Number(e.target.value) })} /></label>
@@ -134,6 +145,7 @@ export default function EventEditor({ slug, eventId, onSaved }: { slug: string; 
         </label>
         <TooltipProvider>
           <div className="text-sm flex items-center gap-3 border rounded px-3 py-1.5">
+            <span className="text-xs uppercase tracking-wide text-muted-foreground mr-1">Pricing</span>
             <label className="flex items-center gap-1.5 cursor-pointer">
               <input type="radio" name="pricing" checked readOnly />
               <span>Free</span>

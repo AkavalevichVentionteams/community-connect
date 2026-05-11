@@ -19,6 +19,8 @@ function AcceptInvite() {
     (async () => {
       const { data: inv } = await supabase.from("host_invites").select("*, hosts(slug)").eq("token", token).maybeSingle();
       if (!inv) { toast.error("Invalid invite"); nav({ to: "/" }); return; }
+      if (inv.revoked_at) { toast.error("This invite has been revoked"); nav({ to: "/" }); return; }
+      if (new Date(inv.expires_at) < new Date()) { toast.error("This invite has expired"); nav({ to: "/" }); return; }
       await supabase.from("host_members").insert({ host_id: inv.host_id, user_id: user.id, role: inv.role });
       toast.success(`Joined as ${inv.role}`);
       nav({ to: "/host/$slug/dashboard", params: { slug: inv.hosts.slug } });

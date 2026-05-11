@@ -23,6 +23,7 @@ import { Route as HostSlugReportsRouteImport } from './routes/host.$slug.reports
 import { Route as HostSlugInviteRouteImport } from './routes/host.$slug.invite'
 import { Route as HostSlugGalleryRouteImport } from './routes/host.$slug.gallery'
 import { Route as HostSlugDashboardRouteImport } from './routes/host.$slug.dashboard'
+import { Route as HostSlugCheckinIndexRouteImport } from './routes/host.$slug.checkin.index'
 import { Route as HostSlugEventsNewRouteImport } from './routes/host.$slug.events.new'
 import { Route as HostSlugCheckinEventIdRouteImport } from './routes/host.$slug.checkin.$eventId'
 import { Route as HostSlugEventsIdEditRouteImport } from './routes/host.$slug.events.$id.edit'
@@ -97,6 +98,11 @@ const HostSlugDashboardRoute = HostSlugDashboardRouteImport.update({
   path: '/host/$slug/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HostSlugCheckinIndexRoute = HostSlugCheckinIndexRouteImport.update({
+  id: '/host/$slug/checkin/',
+  path: '/host/$slug/checkin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HostSlugEventsNewRoute = HostSlugEventsNewRouteImport.update({
   id: '/host/$slug/events/new',
   path: '/host/$slug/events/new',
@@ -130,6 +136,7 @@ export interface FileRoutesByFullPath {
   '/host/$slug/reports': typeof HostSlugReportsRoute
   '/host/$slug/checkin/$eventId': typeof HostSlugCheckinEventIdRoute
   '/host/$slug/events/new': typeof HostSlugEventsNewRoute
+  '/host/$slug/checkin/': typeof HostSlugCheckinIndexRoute
   '/host/$slug/events/$id/edit': typeof HostSlugEventsIdEditRoute
 }
 export interface FileRoutesByTo {
@@ -149,6 +156,7 @@ export interface FileRoutesByTo {
   '/host/$slug/reports': typeof HostSlugReportsRoute
   '/host/$slug/checkin/$eventId': typeof HostSlugCheckinEventIdRoute
   '/host/$slug/events/new': typeof HostSlugEventsNewRoute
+  '/host/$slug/checkin': typeof HostSlugCheckinIndexRoute
   '/host/$slug/events/$id/edit': typeof HostSlugEventsIdEditRoute
 }
 export interface FileRoutesById {
@@ -169,6 +177,7 @@ export interface FileRoutesById {
   '/host/$slug/reports': typeof HostSlugReportsRoute
   '/host/$slug/checkin/$eventId': typeof HostSlugCheckinEventIdRoute
   '/host/$slug/events/new': typeof HostSlugEventsNewRoute
+  '/host/$slug/checkin/': typeof HostSlugCheckinIndexRoute
   '/host/$slug/events/$id/edit': typeof HostSlugEventsIdEditRoute
 }
 export interface FileRouteTypes {
@@ -190,6 +199,7 @@ export interface FileRouteTypes {
     | '/host/$slug/reports'
     | '/host/$slug/checkin/$eventId'
     | '/host/$slug/events/new'
+    | '/host/$slug/checkin/'
     | '/host/$slug/events/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -209,6 +219,7 @@ export interface FileRouteTypes {
     | '/host/$slug/reports'
     | '/host/$slug/checkin/$eventId'
     | '/host/$slug/events/new'
+    | '/host/$slug/checkin'
     | '/host/$slug/events/$id/edit'
   id:
     | '__root__'
@@ -228,6 +239,7 @@ export interface FileRouteTypes {
     | '/host/$slug/reports'
     | '/host/$slug/checkin/$eventId'
     | '/host/$slug/events/new'
+    | '/host/$slug/checkin/'
     | '/host/$slug/events/$id/edit'
   fileRoutesById: FileRoutesById
 }
@@ -248,6 +260,7 @@ export interface RootRouteChildren {
   HostSlugReportsRoute: typeof HostSlugReportsRoute
   HostSlugCheckinEventIdRoute: typeof HostSlugCheckinEventIdRoute
   HostSlugEventsNewRoute: typeof HostSlugEventsNewRoute
+  HostSlugCheckinIndexRoute: typeof HostSlugCheckinIndexRoute
   HostSlugEventsIdEditRoute: typeof HostSlugEventsIdEditRoute
 }
 
@@ -351,6 +364,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HostSlugDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/host/$slug/checkin/': {
+      id: '/host/$slug/checkin/'
+      path: '/host/$slug/checkin'
+      fullPath: '/host/$slug/checkin/'
+      preLoaderRoute: typeof HostSlugCheckinIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/host/$slug/events/new': {
       id: '/host/$slug/events/new'
       path: '/host/$slug/events/new'
@@ -392,6 +412,7 @@ const rootRouteChildren: RootRouteChildren = {
   HostSlugReportsRoute: HostSlugReportsRoute,
   HostSlugCheckinEventIdRoute: HostSlugCheckinEventIdRoute,
   HostSlugEventsNewRoute: HostSlugEventsNewRoute,
+  HostSlugCheckinIndexRoute: HostSlugCheckinIndexRoute,
   HostSlugEventsIdEditRoute: HostSlugEventsIdEditRoute,
 }
 export const routeTree = rootRouteImport

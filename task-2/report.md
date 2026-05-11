@@ -19,7 +19,7 @@
 - Splitting waitlist promotion into Postgres triggers made the behavior deterministic and trivially testable: cancellation, capacity increase, and multi-entry queues all share the same FIFO path.
 - RLS-only authorization (no client trust) meant the same queries are safe to run from anonymous Explore browsing, signed-in RSVP, and host dashboards.
 - Realtime on the `rsvps` table for the check-in page gave live counters across multiple checkers with no polling.
-- Keeping the CSV schema to exactly `name,email,rsvp_status,check_in_time` plus a UTF-8 BOM eliminated Excel mojibake on accented names without extra columns.
+- Keeping the CSV schema to exactly `Name, Email, RSVP status, Check-in time` plus a UTF-8 BOM eliminated Excel mojibake on accented names without extra columns.
 - File-based routes under `src/routes/` made the host area (`/host/$slug/dashboard`, `/host/$slug/checkin/$eventId`, `/host/$slug/reports`, `/host/$slug/gallery`) compose cleanly with a single `HostRoleGate` component.
 
 ## What did not work (and how it was resolved)
@@ -37,4 +37,4 @@
 - **Past events stay browsable** to anonymous users (with an `Include Past` toggle) so shared links never 404, but the RSVP control is hidden and an explicit `Ended` badge is rendered everywhere the event surfaces.
 - **Ticket code is the QR payload** — no separate signed JWT. The code is unique, server-generated, and validated against `rsvps` + `check_ins` on every scan, which keeps the check-in flow offline-friendly for door staff.
 - **Waitlist promotion happens in the database, not the app.** Clients only observe the result through realtime; correctness does not depend on a specific tab being open.
-- **CSV columns are exactly what the spec asks for.** No extra "internal" columns were added.
+- **CSV columns are exactly what the spec asks for** (`Name, Email, RSVP status, Check-in time`). Check-in time is formatted `YYYY-MM-DD HH:MM:SS` in the event's time zone so Excel/Sheets recognize it as a real date, not a text blob. No extra "internal" columns were added.
