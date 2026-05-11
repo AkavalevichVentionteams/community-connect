@@ -1,5 +1,8 @@
 # Project Report
 
+- **Live deployment:** https://buzz-host.lovable.app
+- **Submission folder:** `task-2/` (README, report, example CSV). Application source lives at the repository root.
+
 ## Tools and techniques used
 
 - **Frontend**: TanStack Start v1 (React 19, file-based routing), Vite 7, Tailwind v4, shadcn/ui, framer-motion, lucide-react.
