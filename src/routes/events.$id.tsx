@@ -53,6 +53,8 @@ function EventPage() {
   const [submittedFb, setSubmittedFb] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [gallery, setGallery] = useState<any[]>([]);
+  const [pendingMine, setPendingMine] = useState<any[]>([]);
+  const [isHostMember, setIsHostMember] = useState(false);
   const [reportOpen, setReportOpen] = useState<null | { kind: "event" } | { kind: "photo"; id: string }>(null);
   const [reportReason, setReportReason] = useState("");
 
@@ -76,6 +78,18 @@ function EventPage() {
     setCounts({ going, waitlist: wl });
     const { data: g } = await supabase.from("gallery_photos").select("*").eq("event_id", id).eq("state", "approved").order("created_at", { ascending: false });
     setGallery(g ?? []);
+    if (user) {
+      const { data: mine } = await supabase.from("gallery_photos")
+        .select("*").eq("event_id", id).eq("user_id", user.id).eq("state", "pending");
+      setPendingMine(mine ?? []);
+      const { data: m } = await supabase.from("host_members")
+        .select("id").eq("user_id", user.id).eq("host_id", ev.host_id).maybeSingle();
+      const isOwner = ev.hosts?.owner_id === user.id;
+      setIsHostMember(!!m || isOwner);
+    } else {
+      setPendingMine([]);
+      setIsHostMember(false);
+    }
   }
   useEffect(() => { load(); }, [id, user?.id]);
 
@@ -124,20 +138,31 @@ function EventPage() {
   const ended = isPast(event.ends_at);
   const isHidden = event.hidden;
   if (isHidden) return <div className="p-8 text-center">This event has been hidden.</div>;
+  // Drafts are not viewable by the public — only host members.
+  if (event.state !== "published" && !isHostMember) {
+    return (
+      <div className="max-w-md mx-auto p-12 text-center">
+        <h1 className="text-2xl font-bold mb-2">Event not available</h1>
+        <p className="text-muted-foreground">This event isn't published yet.</p>
+        <Link to="/explore" className="inline-block mt-4 underline">Browse events</Link>
+      </div>
+    );
+  }
 
   async function rsvpAction() {
     if (!user) return nav({ to: "/login", search: { redirect: `/events/${id}` } });
-    const full = counts.going >= event.capacity;
-    const status = full ? "waitlist" : "going";
-    let error;
+    // Always request "going"; the DB trigger will downgrade to waitlist when capacity is hit.
+    let row: any;
+    let error: any;
     if (rsvp) {
-      // Re-activate an existing (cancelled) RSVP so we never create duplicates.
-      ({ error } = await supabase.from("rsvps").update({ status }).eq("id", rsvp.id));
+      ({ data: row, error } = await supabase
+        .from("rsvps").update({ status: "going" }).eq("id", rsvp.id).select().single());
     } else {
-      ({ error } = await supabase.from("rsvps").insert({ event_id: id, user_id: user.id, status }));
+      ({ data: row, error } = await supabase
+        .from("rsvps").insert({ event_id: id, user_id: user.id, status: "going" }).select().single());
     }
     if (error) return toast.error(error.message);
-    toast.success(full ? "You're on the waitlist" : "You're going!");
+    toast.success(row?.status === "going" ? "You're going!" : "You're on the waitlist");
     load();
   }
 
@@ -149,17 +174,36 @@ function EventPage() {
     load();
   }
 
-  function addCal() {
+  function addCalIcs() {
     const ics = makeIcs({
-      uid: event.id,
-      title: event.title,
+      uid: event.id, title: event.title,
       description: event.description || "",
       location: event.venue || event.online_link || "",
-      starts: event.starts_at,
-      ends: event.ends_at,
+      starts: event.starts_at, ends: event.ends_at,
     });
     downloadFile(`${event.title}.ics`, ics, "text/calendar");
   }
+  const calFmt = (d: string) => new Date(d).toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
+  const googleCal = () => {
+    const url = new URL("https://calendar.google.com/calendar/render");
+    url.searchParams.set("action", "TEMPLATE");
+    url.searchParams.set("text", event.title);
+    url.searchParams.set("dates", `${calFmt(event.starts_at)}/${calFmt(event.ends_at)}`);
+    url.searchParams.set("details", event.description || "");
+    url.searchParams.set("location", event.venue || event.online_link || "");
+    window.open(url.toString(), "_blank", "noopener");
+  };
+  const outlookCal = () => {
+    const url = new URL("https://outlook.live.com/calendar/0/deeplink/compose");
+    url.searchParams.set("path", "/calendar/action/compose");
+    url.searchParams.set("rru", "addevent");
+    url.searchParams.set("subject", event.title);
+    url.searchParams.set("startdt", new Date(event.starts_at).toISOString());
+    url.searchParams.set("enddt", new Date(event.ends_at).toISOString());
+    url.searchParams.set("body", event.description || "");
+    url.searchParams.set("location", event.venue || event.online_link || "");
+    window.open(url.toString(), "_blank", "noopener");
+  };
 
   async function submitFeedback() {
     if (!user) return;
@@ -220,6 +264,12 @@ function EventPage() {
         {counts.going} going · {counts.waitlist} waitlisted · capacity {event.capacity}
       </div>
 
+      {event.state !== "published" && isHostMember && (
+        <div className="mt-4 px-3 py-2 rounded border bg-muted text-sm">
+          Draft — only host members can see this page.
+        </div>
+      )}
+
       {rsvp && rsvp.status === "cancelled" && (
         <div className="mt-4 text-sm text-muted-foreground italic">You previously cancelled your RSVP.</div>
       )}
@@ -234,7 +284,11 @@ function EventPage() {
           <button onClick={cancel} className="px-5 py-2.5 rounded border font-medium">Cancel RSVP</button>
         )}
         {rsvp && rsvp.status === "going" && !ended && (
-          <button onClick={addCal} className="px-5 py-2.5 rounded border font-medium">Add to calendar</button>
+          <div className="inline-flex items-center gap-1 rounded border">
+            <button onClick={addCalIcs} className="px-3 py-2.5 font-medium">Add to calendar (.ics)</button>
+            <button onClick={googleCal} className="px-3 py-2.5 border-l text-sm">Google</button>
+            <button onClick={outlookCal} className="px-3 py-2.5 border-l text-sm">Outlook</button>
+          </div>
         )}
         <button
           onClick={() => {
@@ -290,6 +344,19 @@ function EventPage() {
             </div>
           ))}
         </div>
+        {pendingMine.length > 0 && (
+          <div className="mt-4">
+            <div className="text-sm font-medium mb-2">Your pending uploads</div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {pendingMine.map((p) => (
+                <div key={p.id} className="relative">
+                  <img src={p.photo_url} alt="" className="aspect-square object-cover rounded w-full opacity-70" />
+                  <span className="absolute top-1 left-1 text-[10px] px-2 py-0.5 rounded bg-background/90 border">Pending approval</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {user && (
           <div className="mt-4 flex items-center gap-2">
             <input type="file" accept="image/*" onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)} />
