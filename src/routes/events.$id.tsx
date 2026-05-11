@@ -161,6 +161,13 @@ function EventPage() {
     toast.success("Reported. Thank you.");
   }
 
+  async function reportPhoto(photoId: string) {
+    const reason = prompt("Why are you reporting this photo?");
+    if (!reason) return;
+    await supabase.from("reports").insert({ target_type: "photo", target_id: photoId, reporter_id: user?.id ?? null, reason });
+    toast.success("Reported. Thank you.");
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       {event.cover_url && <img src={event.cover_url} alt={event.title} className="w-full aspect-[3/1] object-cover rounded-lg mb-6" />}
@@ -232,7 +239,15 @@ function EventPage() {
         {gallery.length === 0 && <p className="text-muted-foreground text-sm">No approved photos yet.</p>}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {gallery.map((p) => (
-            <img key={p.id} src={p.photo_url} alt="" className="aspect-square object-cover rounded" />
+            <div key={p.id} className="relative group">
+              <img src={p.photo_url} alt="" className="aspect-square object-cover rounded w-full" />
+              <button
+                onClick={() => reportPhoto(p.id)}
+                className="absolute top-1 right-1 text-[10px] px-2 py-0.5 rounded bg-background/80 border opacity-0 group-hover:opacity-100 focus:opacity-100"
+              >
+                Report
+              </button>
+            </div>
           ))}
         </div>
         {user && (
