@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      check_ins: {
+        Row: {
+          checked_in_at: string
+          checker_id: string
+          event_id: string
+          id: string
+          note: string | null
+          rsvp_id: string
+          ticket_code: string
+          undone_at: string | null
+          undone_by: string | null
+        }
+        Insert: {
+          checked_in_at?: string
+          checker_id: string
+          event_id: string
+          id?: string
+          note?: string | null
+          rsvp_id: string
+          ticket_code: string
+          undone_at?: string | null
+          undone_by?: string | null
+        }
+        Update: {
+          checked_in_at?: string
+          checker_id?: string
+          event_id?: string
+          id?: string
+          note?: string | null
+          rsvp_id?: string
+          ticket_code?: string
+          undone_at?: string | null
+          undone_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "check_ins_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "check_ins_rsvp_id_fkey"
+            columns: ["rsvp_id"]
+            isOneToOne: false
+            referencedRelation: "event_tickets"
+            referencedColumns: ["ticket_id"]
+          },
+          {
+            foreignKeyName: "check_ins_rsvp_id_fkey"
+            columns: ["rsvp_id"]
+            isOneToOne: false
+            referencedRelation: "rsvps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "check_ins_rsvp_id_fkey"
+            columns: ["rsvp_id"]
+            isOneToOne: false
+            referencedRelation: "waitlist_entries"
+            referencedColumns: ["entry_id"]
+          },
+        ]
+      }
       events: {
         Row: {
           capacity: number
@@ -82,6 +147,60 @@ export type Database = {
           },
         ]
       }
+      export_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error: string | null
+          event_id: string | null
+          file_url: string | null
+          host_id: string
+          id: string
+          requested_by: string
+          row_count: number | null
+          status: Database["public"]["Enums"]["export_status"]
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          event_id?: string | null
+          file_url?: string | null
+          host_id: string
+          id?: string
+          requested_by: string
+          row_count?: number | null
+          status?: Database["public"]["Enums"]["export_status"]
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          event_id?: string | null
+          file_url?: string | null
+          host_id?: string
+          id?: string
+          requested_by?: string
+          row_count?: number | null
+          status?: Database["public"]["Enums"]["export_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "export_jobs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "export_jobs_host_id_fkey"
+            columns: ["host_id"]
+            isOneToOne: false
+            referencedRelation: "hosts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feedback: {
         Row: {
           comment: string | null
@@ -113,6 +232,48 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gallery_approvals: {
+        Row: {
+          approver_id: string
+          decided_at: string
+          decision: string
+          id: string
+          note: string | null
+          photo_id: string
+        }
+        Insert: {
+          approver_id: string
+          decided_at?: string
+          decision: string
+          id?: string
+          note?: string | null
+          photo_id: string
+        }
+        Update: {
+          approver_id?: string
+          decided_at?: string
+          decision?: string
+          id?: string
+          note?: string | null
+          photo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_approvals_photo_id_fkey"
+            columns: ["photo_id"]
+            isOneToOne: false
+            referencedRelation: "gallery_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gallery_approvals_photo_id_fkey"
+            columns: ["photo_id"]
+            isOneToOne: false
+            referencedRelation: "gallery_photos"
             referencedColumns: ["id"]
           },
         ]
@@ -302,6 +463,7 @@ export type Database = {
       }
       rsvps: {
         Row: {
+          calendar_added_at: string | null
           checked_in_at: string | null
           created_at: string
           event_id: string
@@ -312,6 +474,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          calendar_added_at?: string | null
           checked_in_at?: string | null
           created_at?: string
           event_id: string
@@ -322,6 +485,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          calendar_added_at?: string | null
           checked_in_at?: string | null
           created_at?: string
           event_id?: string
@@ -343,7 +507,98 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      event_tickets: {
+        Row: {
+          attendee_id: string | null
+          calendar_added_at: string | null
+          checked_in_at: string | null
+          code: string | null
+          event_id: string | null
+          issued_at: string | null
+          ticket_id: string | null
+        }
+        Insert: {
+          attendee_id?: string | null
+          calendar_added_at?: string | null
+          checked_in_at?: string | null
+          code?: string | null
+          event_id?: string | null
+          issued_at?: string | null
+          ticket_id?: string | null
+        }
+        Update: {
+          attendee_id?: string | null
+          calendar_added_at?: string | null
+          checked_in_at?: string | null
+          code?: string | null
+          event_id?: string | null
+          issued_at?: string | null
+          ticket_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rsvps_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gallery_items: {
+        Row: {
+          created_at: string | null
+          event_id: string | null
+          id: string | null
+          photo_url: string | null
+          state: Database["public"]["Enums"]["gallery_state"] | null
+          uploader_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string | null
+          photo_url?: string | null
+          state?: Database["public"]["Enums"]["gallery_state"] | null
+          uploader_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string | null
+          photo_url?: string | null
+          state?: Database["public"]["Enums"]["gallery_state"] | null
+          uploader_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_photos_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      waitlist_entries: {
+        Row: {
+          attendee_id: string | null
+          created_at: string | null
+          entry_id: string | null
+          event_id: string | null
+          queue_order: number | null
+          state: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rsvps_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       has_host_role: {
@@ -362,6 +617,7 @@ export type Database = {
     Enums: {
       event_state: "draft" | "published"
       event_visibility: "public" | "unlisted"
+      export_status: "queued" | "running" | "done" | "failed"
       gallery_state: "pending" | "approved" | "hidden"
       member_role: "host" | "checker"
       report_state: "open" | "hidden" | "dismissed"
@@ -496,6 +752,7 @@ export const Constants = {
     Enums: {
       event_state: ["draft", "published"],
       event_visibility: ["public", "unlisted"],
+      export_status: ["queued", "running", "done", "failed"],
       gallery_state: ["pending", "approved", "hidden"],
       member_role: ["host", "checker"],
       report_state: ["open", "hidden", "dismissed"],
