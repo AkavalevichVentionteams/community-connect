@@ -85,7 +85,13 @@ function EventPage() {
     if (!user) return nav({ to: "/login", search: { redirect: `/events/${id}` } });
     const full = counts.going >= event.capacity;
     const status = full ? "waitlist" : "going";
-    const { error } = await supabase.from("rsvps").insert({ event_id: id, user_id: user.id, status });
+    let error;
+    if (rsvp) {
+      // Re-activate an existing (cancelled) RSVP so we never create duplicates.
+      ({ error } = await supabase.from("rsvps").update({ status }).eq("id", rsvp.id));
+    } else {
+      ({ error } = await supabase.from("rsvps").insert({ event_id: id, user_id: user.id, status }));
+    }
     if (error) return toast.error(error.message);
     toast.success(full ? "You're on the waitlist" : "You're going!");
     load();
