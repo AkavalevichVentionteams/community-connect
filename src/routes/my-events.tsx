@@ -67,7 +67,10 @@ function MyEventsPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">My events</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <h1 className="text-3xl font-bold">My events</h1>
+        <Link to="/host/new" className="px-3 py-1.5 rounded border text-sm">Become a Host</Link>
+      </div>
       <div className="grid sm:grid-cols-4 gap-3 mb-6">
         <select className="border rounded px-3 py-2" value={hostFilter} onChange={(e) => setHostFilter(e.target.value)}>
           <option value="">All hosts</option>
@@ -93,7 +96,11 @@ function MyEventsPage() {
             </div>
           );
         })}
-        {!filtered.length && <p className="text-muted-foreground">No events.</p>}
+        {!filtered.length && (
+          <div className="text-muted-foreground">
+            No events yet. <Link to="/host/new" className="underline">Become a Host</Link> to create one, or <Link to="/explore" className="underline">explore events</Link>.
+          </div>
+        )}
       </div>
     </div>
   );
