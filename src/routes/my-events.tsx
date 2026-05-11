@@ -50,18 +50,28 @@ function MyEventsPage() {
     });
   }, [events, q, hostFilter, from, to]);
 
-  // Realtime: reflect waitlist→going promotions and other RSVP changes
-  // that affect events the user has a role on.
+  // Realtime: reflect event changes (publish/unpublish/edits) for hosts the user belongs to.
+  const hostIds = memberships.map((m) => m.host?.id).filter(Boolean).join(",");
   useEffect(() => {
-    if (!user) return;
+    if (!user || !hostIds) return;
     const ch = supabase
       .channel(`my-events-${user.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "rsvps", filter: `user_id=eq.${user.id}` }, () => {
-        // Force a fresh fetch by toggling deps; simpler: re-run effect.
-      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "events" },
+        async () => {
+          const ids = hostIds.split(",");
+          const { data: ev } = await supabase
+            .from("events")
+            .select("*, hosts(name,slug)")
+            .in("host_id", ids)
+            .order("starts_at", { ascending: false });
+          setEvents(ev ?? []);
+        },
+      )
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [user?.id]);
+  }, [user?.id, hostIds]);
 
   if (!user) return null;
 

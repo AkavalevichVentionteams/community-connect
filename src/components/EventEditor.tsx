@@ -54,6 +54,19 @@ export default function EventEditor({ slug, eventId, onSaved }: { slug: string; 
 
   async function save(state?: "draft" | "published") {
     if (!hostId) return;
+    const wantsPublish = (state ?? form.state) === "published";
+    if (wantsPublish) {
+      const hasVenue = (form.venue ?? "").trim().length > 0;
+      const hasLink = (form.online_link ?? "").trim().length > 0;
+      if (!hasVenue && !hasLink) {
+        toast.error("Add a venue address or an online link before publishing");
+        return;
+      }
+      if (!form.title.trim() || !form.starts_at || !form.ends_at) {
+        toast.error("Title, start, and end are required to publish");
+        return;
+      }
+    }
     setBusy(true);
     const payload: any = {
       ...form,

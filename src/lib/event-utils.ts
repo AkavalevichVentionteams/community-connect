@@ -59,7 +59,8 @@ export function downloadFile(name: string, content: string, mime: string) {
 }
 
 export function toCsv(rows: Array<Record<string, unknown>>) {
-  const headers = ["name", "email", "rsvp_status", "check_in_time"];
+  // Spec wording: name, email, RSVP status, check-in time.
+  const headers = ["Name", "Email", "RSVP status", "Check-in time"];
   const esc = (v: unknown) => {
     const s = v == null ? "" : String(v);
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -68,6 +69,21 @@ export function toCsv(rows: Array<Record<string, unknown>>) {
     ? rows.map((r) => headers.map((h) => esc(r[h])).join(","))
     : [];
   return [headers.join(","), ...rowsOut].join("\n");
+}
+
+// Format a timestamp so Excel and Google Sheets recognize it as a date,
+// not a text blob. "YYYY-MM-DD HH:MM:SS" in the event's local time zone.
+export function formatCheckInTime(iso: string | null | undefined, tz?: string) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz || undefined,
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+  }).formatToParts(d);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")} ${get("hour")}:${get("minute")}:${get("second")}`;
 }
 
 export function slugify(s: string) {

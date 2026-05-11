@@ -87,7 +87,21 @@ function EventPage() {
       .channel(`rsvp-${id}-${user.id}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "rsvps", filter: `event_id=eq.${id}` },
+        { event: "UPDATE", schema: "public", table: "rsvps", filter: `event_id=eq.${id}` },
+        (payload: any) => {
+          if (
+            payload.new?.user_id === user.id &&
+            payload.old?.status === "waitlist" &&
+            payload.new?.status === "going"
+          ) {
+            toast.success("You're in! Promoted from the waitlist.");
+          }
+          load();
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "rsvps", filter: `event_id=eq.${id}` },
         () => load(),
       )
       .subscribe();
@@ -219,7 +233,7 @@ function EventPage() {
         {!ended && rsvp && rsvp.status !== "cancelled" && (
           <button onClick={cancel} className="px-5 py-2.5 rounded border font-medium">Cancel RSVP</button>
         )}
-        {rsvp && rsvp.status !== "cancelled" && (
+        {rsvp && rsvp.status === "going" && !ended && (
           <button onClick={addCal} className="px-5 py-2.5 rounded border font-medium">Add to calendar</button>
         )}
         <button
