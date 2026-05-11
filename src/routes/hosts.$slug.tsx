@@ -4,6 +4,33 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatDateTime, isPast } from "@/lib/event-utils";
 
 export const Route = createFileRoute("/hosts/$slug")({
+  loader: async ({ params }) => {
+    const { data } = await supabase
+      .from("hosts")
+      .select("name,bio,logo_url,slug")
+      .eq("slug", params.slug)
+      .maybeSingle();
+    return { host: data };
+  },
+  head: ({ loaderData }) => {
+    const h: any = loaderData?.host;
+    if (!h) return { meta: [{ title: "Host" }] };
+    const title = `${h.name} — Host`;
+    const desc = (h.bio ?? "").slice(0, 160) || `Events hosted by ${h.name}`;
+    const meta: Array<Record<string, string>> = [
+      { title },
+      { name: "description", content: desc },
+      { property: "og:title", content: title },
+      { property: "og:description", content: desc },
+      { property: "og:type", content: "profile" },
+      { name: "twitter:card", content: h.logo_url ? "summary_large_image" : "summary" },
+    ];
+    if (h.logo_url) {
+      meta.push({ property: "og:image", content: h.logo_url });
+      meta.push({ name: "twitter:image", content: h.logo_url });
+    }
+    return { meta };
+  },
   component: HostPage,
 });
 
@@ -53,5 +80,3 @@ function HostPage() {
     </div>
   );
 }
-
-export const head = () => ({});

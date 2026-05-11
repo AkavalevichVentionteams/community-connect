@@ -7,6 +7,34 @@ import { toast } from "sonner";
 import QRCode from "qrcode";
 
 export const Route = createFileRoute("/events/$id")({
+  loader: async ({ params }) => {
+    const { data } = await supabase
+      .from("events")
+      .select("id,title,description,cover_url,starts_at,ends_at,visibility,state,hosts(name,slug,logo_url)")
+      .eq("id", params.id)
+      .maybeSingle();
+    return { event: data };
+  },
+  head: ({ loaderData }) => {
+    const ev: any = loaderData?.event;
+    if (!ev) return { meta: [{ title: "Event" }] };
+    const title = `${ev.title} — ${ev.hosts?.name ?? "Event"}`;
+    const desc = (ev.description ?? "").slice(0, 160) || `${ev.title} on ${new Date(ev.starts_at).toLocaleString()}`;
+    const img = ev.cover_url || ev.hosts?.logo_url;
+    const meta: Array<Record<string, string>> = [
+      { title },
+      { name: "description", content: desc },
+      { property: "og:title", content: title },
+      { property: "og:description", content: desc },
+      { property: "og:type", content: "event" },
+      { name: "twitter:card", content: img ? "summary_large_image" : "summary" },
+    ];
+    if (img) {
+      meta.push({ property: "og:image", content: img });
+      meta.push({ name: "twitter:image", content: img });
+    }
+    return { meta };
+  },
   component: EventPage,
 });
 
