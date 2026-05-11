@@ -15,7 +15,11 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HostsSlugRouteImport } from './routes/hosts.$slug'
+import { Route as HostNewRouteImport } from './routes/host.new'
 import { Route as EventsIdRouteImport } from './routes/events.$id'
+import { Route as HostSlugDashboardRouteImport } from './routes/host.$slug.dashboard'
+import { Route as HostSlugEventsNewRouteImport } from './routes/host.$slug.events.new'
+import { Route as HostSlugEventsIdEditRouteImport } from './routes/host.$slug.events.$id.edit'
 
 const TicketsRoute = TicketsRouteImport.update({
   id: '/tickets',
@@ -47,9 +51,29 @@ const HostsSlugRoute = HostsSlugRouteImport.update({
   path: '/hosts/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HostNewRoute = HostNewRouteImport.update({
+  id: '/host/new',
+  path: '/host/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EventsIdRoute = EventsIdRouteImport.update({
   id: '/events/$id',
   path: '/events/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HostSlugDashboardRoute = HostSlugDashboardRouteImport.update({
+  id: '/host/$slug/dashboard',
+  path: '/host/$slug/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HostSlugEventsNewRoute = HostSlugEventsNewRouteImport.update({
+  id: '/host/$slug/events/new',
+  path: '/host/$slug/events/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HostSlugEventsIdEditRoute = HostSlugEventsIdEditRouteImport.update({
+  id: '/host/$slug/events/$id/edit',
+  path: '/host/$slug/events/$id/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -60,7 +84,11 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/tickets': typeof TicketsRoute
   '/events/$id': typeof EventsIdRoute
+  '/host/new': typeof HostNewRoute
   '/hosts/$slug': typeof HostsSlugRoute
+  '/host/$slug/dashboard': typeof HostSlugDashboardRoute
+  '/host/$slug/events/new': typeof HostSlugEventsNewRoute
+  '/host/$slug/events/$id/edit': typeof HostSlugEventsIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -69,7 +97,11 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/tickets': typeof TicketsRoute
   '/events/$id': typeof EventsIdRoute
+  '/host/new': typeof HostNewRoute
   '/hosts/$slug': typeof HostsSlugRoute
+  '/host/$slug/dashboard': typeof HostSlugDashboardRoute
+  '/host/$slug/events/new': typeof HostSlugEventsNewRoute
+  '/host/$slug/events/$id/edit': typeof HostSlugEventsIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -79,7 +111,11 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/tickets': typeof TicketsRoute
   '/events/$id': typeof EventsIdRoute
+  '/host/new': typeof HostNewRoute
   '/hosts/$slug': typeof HostsSlugRoute
+  '/host/$slug/dashboard': typeof HostSlugDashboardRoute
+  '/host/$slug/events/new': typeof HostSlugEventsNewRoute
+  '/host/$slug/events/$id/edit': typeof HostSlugEventsIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -90,7 +126,11 @@ export interface FileRouteTypes {
     | '/signup'
     | '/tickets'
     | '/events/$id'
+    | '/host/new'
     | '/hosts/$slug'
+    | '/host/$slug/dashboard'
+    | '/host/$slug/events/new'
+    | '/host/$slug/events/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -99,7 +139,11 @@ export interface FileRouteTypes {
     | '/signup'
     | '/tickets'
     | '/events/$id'
+    | '/host/new'
     | '/hosts/$slug'
+    | '/host/$slug/dashboard'
+    | '/host/$slug/events/new'
+    | '/host/$slug/events/$id/edit'
   id:
     | '__root__'
     | '/'
@@ -108,7 +152,11 @@ export interface FileRouteTypes {
     | '/signup'
     | '/tickets'
     | '/events/$id'
+    | '/host/new'
     | '/hosts/$slug'
+    | '/host/$slug/dashboard'
+    | '/host/$slug/events/new'
+    | '/host/$slug/events/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -118,7 +166,11 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   TicketsRoute: typeof TicketsRoute
   EventsIdRoute: typeof EventsIdRoute
+  HostNewRoute: typeof HostNewRoute
   HostsSlugRoute: typeof HostsSlugRoute
+  HostSlugDashboardRoute: typeof HostSlugDashboardRoute
+  HostSlugEventsNewRoute: typeof HostSlugEventsNewRoute
+  HostSlugEventsIdEditRoute: typeof HostSlugEventsIdEditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -165,11 +217,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HostsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/host/new': {
+      id: '/host/new'
+      path: '/host/new'
+      fullPath: '/host/new'
+      preLoaderRoute: typeof HostNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/events/$id': {
       id: '/events/$id'
       path: '/events/$id'
       fullPath: '/events/$id'
       preLoaderRoute: typeof EventsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/host/$slug/dashboard': {
+      id: '/host/$slug/dashboard'
+      path: '/host/$slug/dashboard'
+      fullPath: '/host/$slug/dashboard'
+      preLoaderRoute: typeof HostSlugDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/host/$slug/events/new': {
+      id: '/host/$slug/events/new'
+      path: '/host/$slug/events/new'
+      fullPath: '/host/$slug/events/new'
+      preLoaderRoute: typeof HostSlugEventsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/host/$slug/events/$id/edit': {
+      id: '/host/$slug/events/$id/edit'
+      path: '/host/$slug/events/$id/edit'
+      fullPath: '/host/$slug/events/$id/edit'
+      preLoaderRoute: typeof HostSlugEventsIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -182,7 +262,11 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   TicketsRoute: TicketsRoute,
   EventsIdRoute: EventsIdRoute,
+  HostNewRoute: HostNewRoute,
   HostsSlugRoute: HostsSlugRoute,
+  HostSlugDashboardRoute: HostSlugDashboardRoute,
+  HostSlugEventsNewRoute: HostSlugEventsNewRoute,
+  HostSlugEventsIdEditRoute: HostSlugEventsIdEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
