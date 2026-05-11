@@ -22,17 +22,22 @@ export function makeIcs(opts: {
   starts: string;
   ends: string;
 }) {
-  const fmt = (d: string) => new Date(d).toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
+  // Emit UTC Zulu times so calendar clients honor the wall-clock time
+  // consistently without needing an inline VTIMEZONE block.
+  const fmt = (d: string) => new Date(d).toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "") + "";
   const esc = (s: string) => s.replace(/\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
+  const utc = (d: string) => fmt(d); // already ISO → ends in Z
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//Communa//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
     "BEGIN:VEVENT",
     `UID:${opts.uid}`,
-    `DTSTAMP:${fmt(new Date().toISOString())}`,
-    `DTSTART:${fmt(opts.starts)}`,
-    `DTEND:${fmt(opts.ends)}`,
+    `DTSTAMP:${utc(new Date().toISOString())}`,
+    `DTSTART:${utc(opts.starts)}`,
+    `DTEND:${utc(opts.ends)}`,
     `SUMMARY:${esc(opts.title)}`,
     opts.description ? `DESCRIPTION:${esc(opts.description)}` : "",
     opts.location ? `LOCATION:${esc(opts.location)}` : "",

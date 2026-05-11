@@ -122,6 +122,15 @@ function Section({ title, events, stats, slug, onPublish, onDuplicate, onExport 
                 <Link to="/host/$slug/events/$id/edit" params={{ slug, id: e.id }} className="px-2 py-1 border rounded">Edit</Link>
                 <button onClick={() => onPublish(e.id, e.state !== "published")} className="px-2 py-1 border rounded">{e.state === "published" ? "Unpublish" : "Publish"}</button>
                 <button onClick={() => onDuplicate(e)} className="px-2 py-1 border rounded">Duplicate</button>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/events/${e.id}`);
+                    toast.success("Link copied");
+                  }}
+                  className="px-2 py-1 border rounded"
+                >
+                  Copy link
+                </button>
                 <Link to="/host/$slug/checkin/$eventId" params={{ slug, eventId: e.id }} className="px-2 py-1 border rounded">Check-in</Link>
                 <button onClick={() => onExport(e.id, e.title)} className="px-2 py-1 border rounded">CSV</button>
               </div>

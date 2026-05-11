@@ -143,6 +143,7 @@ function SiteHeader() {
           <Link to="/explore" activeProps={{ className: "font-semibold" }}>Explore</Link>
           {user && <Link to="/tickets" activeProps={{ className: "font-semibold" }}>My Tickets</Link>}
           {user && <Link to="/my-events" activeProps={{ className: "font-semibold" }}>My Events</Link>}
+          {user && <Link to="/host/new" activeProps={{ className: "font-semibold" }}>Become a Host</Link>}
         </nav>
         <div className="ml-auto flex items-center gap-3 text-sm">
           {user ? (

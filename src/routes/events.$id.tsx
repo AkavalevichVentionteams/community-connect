@@ -222,6 +222,15 @@ function EventPage() {
         {rsvp && rsvp.status !== "cancelled" && (
           <button onClick={addCal} className="px-5 py-2.5 rounded border font-medium">Add to calendar</button>
         )}
+        <button
+          onClick={() => {
+            navigator.clipboard.writeText(window.location.href);
+            toast.success("Link copied");
+          }}
+          className="px-5 py-2.5 rounded border font-medium"
+        >
+          Copy link
+        </button>
         <button onClick={() => { setReportReason(""); setReportOpen({ kind: "event" }); }} className="px-5 py-2.5 rounded border text-sm text-muted-foreground">Report</button>
       </div>
 
