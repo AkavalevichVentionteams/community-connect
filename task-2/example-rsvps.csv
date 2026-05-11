@@ -1,0 +1,6 @@
+﻿name,email,rsvp_status,check_in_time
+Alice Nguyen,alice@example.com,going,2026-05-15T18:04:22Z
+Björn Andersson,bjorn@example.com,going,2026-05-15T18:07:11Z
+Carlos Méndez,carlos@example.com,going,
+Dana Patel,dana@example.com,waitlist,
+Eli Cohen,eli@example.com,cancelled,
