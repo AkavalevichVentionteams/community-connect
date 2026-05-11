@@ -129,6 +129,17 @@ function RootComponent() {
 
 function SiteHeader() {
   const { user } = useAuth();
+  const [hasRoles, setHasRoles] = useState(false);
+  useEffect(() => {
+    if (!user) { setHasRoles(false); return; }
+    (async () => {
+      const [{ count: memCount }, { count: ownCount }] = await Promise.all([
+        supabase.from("host_members").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("hosts").select("id", { count: "exact", head: true }).eq("owner_id", user.id),
+      ]);
+      setHasRoles((memCount ?? 0) + (ownCount ?? 0) > 0);
+    })();
+  }, [user?.id]);
   return (
     <header className="border-b bg-card/50 backdrop-blur sticky top-0 z-40">
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-4">
@@ -137,9 +148,9 @@ function SiteHeader() {
         </Link>
         <nav className="flex gap-4 text-sm">
           <Link to="/explore" activeProps={{ className: "font-semibold" }}>Explore</Link>
-          {user && <Link to="/tickets" activeProps={{ className: "font-semibold" }}>My Tickets</Link>}
-          {user && <Link to="/my-events" activeProps={{ className: "font-semibold" }}>My Events</Link>}
-          {user && <Link to="/host/new" activeProps={{ className: "font-semibold" }}>Become a Host</Link>}
+          {user && <Link to="/tickets" activeProps={{ className: "font-semibold" }}>My tickets</Link>}
+          {user && hasRoles && <Link to="/my-events" activeProps={{ className: "font-semibold" }}>My events</Link>}
+          {user && !hasRoles && <Link to="/host/new" activeProps={{ className: "font-semibold" }}>Become a host</Link>}
         </nav>
         <div className="ml-auto flex items-center gap-3 text-sm">
           {user ? (
