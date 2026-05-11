@@ -42,10 +42,18 @@ function ExplorePage() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Explore events</h1>
       <div className="grid sm:grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-        <input className="border rounded px-3 py-2 md:col-span-2" placeholder="Search title…" value={q} onChange={(e) => setQ(e.target.value)} />
-        <input className="border rounded px-3 py-2" placeholder="Location" value={loc} onChange={(e) => setLoc(e.target.value)} />
-        <input type="date" className="border rounded px-3 py-2" value={from} onChange={(e) => setFrom(e.target.value)} />
-        <input type="date" className="border rounded px-3 py-2" value={to} onChange={(e) => setTo(e.target.value)} />
+        <label className="text-xs text-muted-foreground md:col-span-2">Search
+          <input className="mt-1 w-full border rounded px-3 py-2" placeholder="Title…" value={q} onChange={(e) => setQ(e.target.value)} />
+        </label>
+        <label className="text-xs text-muted-foreground">Location
+          <input className="mt-1 w-full border rounded px-3 py-2" placeholder="City or venue" value={loc} onChange={(e) => setLoc(e.target.value)} />
+        </label>
+        <label className="text-xs text-muted-foreground">From
+          <input type="date" className="mt-1 w-full border rounded px-3 py-2" value={from} onChange={(e) => setFrom(e.target.value)} />
+        </label>
+        <label className="text-xs text-muted-foreground">To
+          <input type="date" className="mt-1 w-full border rounded px-3 py-2" value={to} onChange={(e) => setTo(e.target.value)} />
+        </label>
       </div>
       <label className="flex items-center gap-2 text-sm mb-6">
         <input type="checkbox" checked={includePast} onChange={(e) => setIncludePast(e.target.checked)} />
