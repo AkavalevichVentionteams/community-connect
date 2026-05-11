@@ -224,7 +224,7 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
-          owner_id: string
+          owner_id: string | null
           slug: string
         }
         Insert: {
@@ -234,7 +234,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name: string
-          owner_id: string
+          owner_id?: string | null
           slug: string
         }
         Update: {
@@ -244,7 +244,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
-          owner_id?: string
+          owner_id?: string | null
           slug?: string
         }
         Relationships: []
