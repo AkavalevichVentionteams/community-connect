@@ -1,6 +1,7 @@
 # Project Report
 
 - **Live deployment:** https://buzz-host.lovable.app
+- **Source repository:** https://github.com/AkavalevichVentionteams/community-connect
 - **Submission folder:** `task-2/` (README, report, example CSV). Application source lives at the repository root.
 
 ## Tools and techniques used
