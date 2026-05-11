@@ -1,8 +1,8 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { HostRoleGate } from "@/components/HostRoleGate";
 
 export const Route = createFileRoute("/host/$slug/checkin/$eventId")({
   component: CheckinPage,
@@ -10,17 +10,23 @@ export const Route = createFileRoute("/host/$slug/checkin/$eventId")({
 
 function CheckinPage() {
   const { eventId, slug } = Route.useParams();
-  const { user, loading } = useAuth();
-  const nav = useNavigate();
+  return (
+    <HostRoleGate
+      slug={slug}
+      allow={["host", "checker"]}
+      redirectPath={`/host/${slug}/checkin/${eventId}`}
+    >
+      {() => <CheckinBody eventId={eventId} />}
+    </HostRoleGate>
+  );
+}
+
+function CheckinBody({ eventId }: { eventId: string }) {
   const [event, setEvent] = useState<any>(null);
   const [code, setCode] = useState("");
   const [counts, setCounts] = useState({ going: 0, checkedIn: 0 });
   const [lastRsvpId, setLastRsvpId] = useState<string | null>(null);
   const [history, setHistory] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (!loading && !user) nav({ to: "/login", search: { redirect: `/host/${slug}/checkin/${eventId}` } });
-  }, [user, loading]);
 
   async function load() {
     const { data: e } = await supabase.from("events").select("*").eq("id", eventId).maybeSingle();

@@ -1,9 +1,9 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
 import { formatDateTime, isPast, toCsv, downloadFile } from "@/lib/event-utils";
 import { toast } from "sonner";
+import { HostRoleGate } from "@/components/HostRoleGate";
 
 export const Route = createFileRoute("/host/$slug/dashboard")({
   component: Dashboard,
@@ -11,21 +11,27 @@ export const Route = createFileRoute("/host/$slug/dashboard")({
 
 function Dashboard() {
   const { slug } = Route.useParams();
-  const { user, loading } = useAuth();
-  const nav = useNavigate();
-  const [host, setHost] = useState<any>(null);
+  return (
+    <HostRoleGate
+      slug={slug}
+      allow={["host"]}
+      redirectPath={`/host/${slug}/dashboard`}
+    >
+      {({ host }) => <DashboardBody slug={slug} host={host} />}
+    </HostRoleGate>
+  );
+}
+
+function DashboardBody({ slug, host }: { slug: string; host: { id: string; name: string } }) {
   const [events, setEvents] = useState<any[]>([]);
   const [stats, setStats] = useState<Record<string, any>>({});
 
-  useEffect(() => {
-    if (!loading && !user) nav({ to: "/login", search: { redirect: `/host/${slug}/dashboard` } });
-  }, [user, loading]);
-
   async function load() {
-    const { data: h } = await supabase.from("hosts").select("*").eq("slug", slug).maybeSingle();
-    setHost(h);
-    if (!h) return;
-    const { data: ev } = await supabase.from("events").select("*").eq("host_id", h.id).order("starts_at", { ascending: false });
+    const { data: ev } = await supabase
+      .from("events")
+      .select("*")
+      .eq("host_id", host.id)
+      .order("starts_at", { ascending: false });
     setEvents(ev ?? []);
     const s: Record<string, any> = {};
     for (const e of ev ?? []) {
@@ -38,7 +44,7 @@ function Dashboard() {
     }
     setStats(s);
   }
-  useEffect(() => { if (user) load(); }, [user?.id, slug]);
+  useEffect(() => { load(); }, [host.id]);
 
   async function publish(id: string, on: boolean) {
     await supabase.from("events").update({ state: on ? "published" : "draft" }).eq("id", id);
@@ -69,8 +75,6 @@ function Dashboard() {
     }));
     downloadFile(`${title.replace(/\W+/g, "_")}-rsvps.csv`, toCsv(rows.length ? rows : [{ name: "", email: "", rsvp_status: "", check_in_time: "" }]), "text/csv");
   }
-
-  if (!host) return <div className="p-8 text-center text-muted-foreground">Loading…</div>;
 
   const upcoming = events.filter((e) => !isPast(e.ends_at));
   const past = events.filter((e) => isPast(e.ends_at));
