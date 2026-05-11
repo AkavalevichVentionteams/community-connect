@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { HostRoleGate } from "@/components/HostRoleGate";
 
 export const Route = createFileRoute("/host/$slug/gallery")({
   component: GalleryReview,
@@ -9,18 +10,24 @@ export const Route = createFileRoute("/host/$slug/gallery")({
 
 function GalleryReview() {
   const { slug } = Route.useParams();
+  return (
+    <HostRoleGate slug={slug} allow={["host"]} redirectPath={`/host/${slug}/gallery`}>
+      {({ host }) => <GalleryBody hostId={host.id} />}
+    </HostRoleGate>
+  );
+}
+
+function GalleryBody({ hostId }: { hostId: string }) {
   const [pending, setPending] = useState<any[]>([]);
 
   async function load() {
-    const { data: h } = await supabase.from("hosts").select("id").eq("slug", slug).maybeSingle();
-    if (!h) return;
-    const { data: ev } = await supabase.from("events").select("id").eq("host_id", h.id);
+    const { data: ev } = await supabase.from("events").select("id").eq("host_id", hostId);
     const ids = (ev ?? []).map((x) => x.id);
     if (!ids.length) return setPending([]);
     const { data } = await supabase.from("gallery_photos").select("*").in("event_id", ids).eq("state", "pending");
     setPending(data ?? []);
   }
-  useEffect(() => { load(); }, [slug]);
+  useEffect(() => { load(); }, [hostId]);
 
   async function approve(id: string) {
     await supabase.from("gallery_photos").update({ state: "approved" }).eq("id", id);
