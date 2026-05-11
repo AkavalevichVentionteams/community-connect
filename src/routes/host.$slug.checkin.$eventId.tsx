@@ -74,11 +74,12 @@ function CheckinBody({ eventId }: { eventId: string }) {
       .select("id");
     if (error) { setBusy(false); return toast.error(error.message); }
     if (!updated || !updated.length) { setBusy(false); toast.warning("Already checked in"); return; }
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) { setBusy(false); return toast.error("Not signed in"); }
     // Audit log; survives reload for Undo last scan.
     const { data: ci } = await supabase
       .from("check_ins")
-      .insert({ rsvp_id: r.id, event_id: eventId, checker_id: user?.id, ticket_code: trimmed })
+      .insert({ rsvp_id: r.id, event_id: eventId, checker_id: auth.user.id, ticket_code: trimmed })
       .select("id")
       .maybeSingle();
     toast.success("Checked in");
@@ -102,15 +103,15 @@ function CheckinBody({ eventId }: { eventId: string }) {
         .maybeSingle();
       if (!data) return toast.error("Nothing to undo");
       await supabase.from("rsvps").update({ checked_in_at: null }).eq("id", data.rsvp_id);
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from("check_ins").update({ undone_at: new Date().toISOString(), undone_by: user?.id }).eq("id", data.id);
+      const { data: auth2 } = await supabase.auth.getUser();
+      await supabase.from("check_ins").update({ undone_at: new Date().toISOString(), undone_by: auth2.user?.id ?? null }).eq("id", data.id);
       toast.success("Undone");
       load();
       return;
     }
     await supabase.from("rsvps").update({ checked_in_at: null }).eq("id", lastScan.rsvpId);
-    const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from("check_ins").update({ undone_at: new Date().toISOString(), undone_by: user?.id }).eq("id", lastScan.checkInId);
+    const { data: auth3 } = await supabase.auth.getUser();
+    await supabase.from("check_ins").update({ undone_at: new Date().toISOString(), undone_by: auth3.user?.id ?? null }).eq("id", lastScan.checkInId);
     setLastScan(null);
     toast.success("Undone");
     load();
