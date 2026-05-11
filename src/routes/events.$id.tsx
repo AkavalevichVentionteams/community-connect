@@ -75,6 +75,23 @@ function EventPage() {
   }
   useEffect(() => { load(); }, [id, user?.id]);
 
+  // Realtime: when this user's RSVP changes (e.g. promoted from waitlist → going),
+  // refresh so they immediately see the ticket and QR.
+  useEffect(() => {
+    if (!user) return;
+    const ch = supabase
+      .channel(`rsvp-${id}-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "rsvps", filter: `event_id=eq.${id}` },
+        () => load(),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [id, user?.id]);
+
   if (!event) return <div className="p-8 text-center text-muted-foreground">Loading…</div>;
 
   const ended = isPast(event.ends_at);

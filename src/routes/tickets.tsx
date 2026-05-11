@@ -19,23 +19,37 @@ function TicketsPage() {
     if (!loading && !user) nav({ to: "/login", search: { redirect: "/tickets" } });
   }, [user, loading]);
 
-  useEffect(() => {
-    if (!user) return;
-    supabase
+  async function loadTickets(uid: string) {
+    const { data } = await supabase
       .from("rsvps")
       .select("*, events(*, hosts(name,slug))")
-      .eq("user_id", user.id)
+      .eq("user_id", uid)
       .in("status", ["going", "waitlist"])
-      .order("created_at", { ascending: false })
-      .then(async ({ data }) => {
-        const upcoming = (data ?? []).filter((r: any) => new Date(r.events.ends_at) > new Date());
-        setRows(upcoming);
-        const codes: Record<string, string> = {};
-        for (const r of upcoming) {
-          codes[r.id] = await QRCode.toDataURL(r.ticket_code, { width: 200 });
-        }
-        setQrs(codes);
-      });
+      .order("created_at", { ascending: false });
+    const upcoming = (data ?? []).filter((r: any) => new Date(r.events.ends_at) > new Date());
+    setRows(upcoming);
+    const codes: Record<string, string> = {};
+    for (const r of upcoming) {
+      codes[r.id] = await QRCode.toDataURL(r.ticket_code, { width: 200 });
+    }
+    setQrs(codes);
+  }
+
+  useEffect(() => {
+    if (!user) return;
+    loadTickets(user.id);
+    // Realtime: reflect waitlist → going promotions immediately.
+    const ch = supabase
+      .channel(`my-rsvps-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "rsvps", filter: `user_id=eq.${user.id}` },
+        () => loadTickets(user.id),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
   }, [user?.id]);
 
   if (!user) return null;
