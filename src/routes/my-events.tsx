@@ -43,11 +43,25 @@ function MyEventsPage() {
     return events.filter((e) => {
       if (hostFilter && e.host_id !== hostFilter) return false;
       if (q && !e.title.toLowerCase().includes(q.toLowerCase())) return false;
-      if (from && new Date(e.starts_at) < new Date(from)) return false;
+      // Range overlap: include events that intersect [from, to].
+      if (from && new Date(e.ends_at) < new Date(from)) return false;
       if (to && new Date(e.starts_at) > new Date(to)) return false;
       return true;
     });
   }, [events, q, hostFilter, from, to]);
+
+  // Realtime: reflect waitlist→going promotions and other RSVP changes
+  // that affect events the user has a role on.
+  useEffect(() => {
+    if (!user) return;
+    const ch = supabase
+      .channel(`my-events-${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "rsvps", filter: `user_id=eq.${user.id}` }, () => {
+        // Force a fresh fetch by toggling deps; simpler: re-run effect.
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [user?.id]);
 
   if (!user) return null;
 

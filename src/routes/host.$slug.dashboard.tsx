@@ -74,7 +74,7 @@ function DashboardBody({ slug, host }: { slug: string; host: { id: string; name:
       check_in_time: r.checked_in_at ?? "",
     }));
     // Prepend UTF-8 BOM so Excel opens non-ASCII names correctly.
-    const csv = "\ufeff" + toCsv(rows.length ? rows : [{ name: "", email: "", rsvp_status: "", check_in_time: "" }]);
+    const csv = "\ufeff" + toCsv(rows);
     downloadFile(`${title.replace(/\W+/g, "_")}-rsvps.csv`, csv, "text/csv;charset=utf-8");
   }
 
@@ -100,10 +100,12 @@ function DashboardBody({ slug, host }: { slug: string; host: { id: string; name:
 }
 
 function Section({ title, events, stats, slug, onPublish, onDuplicate, onExport }: any) {
-  if (!events.length) return null;
   return (
     <section className="mb-10">
       <h2 className="text-xl font-semibold mb-3">{title}</h2>
+      {!events.length && (
+        <p className="text-sm text-muted-foreground">No {title.toLowerCase()} events.</p>
+      )}
       <div className="space-y-3">
         {events.map((e: any) => {
           const s = stats[e.id] || {};

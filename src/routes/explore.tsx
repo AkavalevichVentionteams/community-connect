@@ -32,7 +32,7 @@ function ExplorePage() {
       .order("starts_at", { ascending: true });
     if (!includePast) qb = qb.gte("ends_at", new Date().toISOString());
     if (q) qb = qb.ilike("title", `%${q}%`);
-    if (loc) qb = qb.ilike("venue", `%${loc}%`);
+    if (loc) qb = qb.or(`venue.ilike.%${loc}%,online_link.ilike.%${loc}%`);
     if (from) qb = qb.gte("starts_at", new Date(from).toISOString());
     if (to) qb = qb.lte("starts_at", new Date(to).toISOString());
     qb.limit(60).then(({ data }) => setEvents(data ?? []));

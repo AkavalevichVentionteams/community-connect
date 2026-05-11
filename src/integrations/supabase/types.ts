@@ -613,6 +613,10 @@ export type Database = {
         Args: { _host: string; _user: string }
         Returns: boolean
       }
+      promote_waitlist_for_event: {
+        Args: { _event: string }
+        Returns: undefined
+      }
     }
     Enums: {
       event_state: "draft" | "published"

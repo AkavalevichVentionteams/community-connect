@@ -25,8 +25,9 @@ function CheckinBody({ eventId }: { eventId: string }) {
   const [event, setEvent] = useState<any>(null);
   const [code, setCode] = useState("");
   const [counts, setCounts] = useState({ going: 0, checkedIn: 0 });
-  const [lastRsvpId, setLastRsvpId] = useState<string | null>(null);
+  const [lastScan, setLastScan] = useState<{ rsvpId: string; checkInId: string } | null>(null);
   const [history, setHistory] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
 
   async function load() {
     const { data: e } = await supabase.from("events").select("*").eq("id", eventId).maybeSingle();
@@ -55,28 +56,63 @@ function CheckinBody({ eventId }: { eventId: string }) {
   }, [eventId]);
 
   async function checkIn(c?: string) {
+    if (busy) return;
     const trimmed = (c ?? code).trim();
     if (!trimmed) return;
+    setBusy(true);
     const { data: r } = await supabase.from("rsvps").select("*").eq("event_id", eventId).eq("ticket_code", trimmed).maybeSingle();
-    if (!r) return toast.error("No matching ticket");
-    if (r.status !== "going") return toast.error(`Ticket is ${r.status}`);
-    if (r.checked_in_at) {
-      toast.warning("Already checked in");
-      return;
-    }
-    const { error } = await supabase.from("rsvps").update({ checked_in_at: new Date().toISOString() }).eq("id", r.id);
-    if (error) return toast.error(error.message);
+    if (!r) { setBusy(false); return toast.error("No matching ticket"); }
+    if (r.status !== "going") { setBusy(false); return toast.error(`Ticket is ${r.status}`); }
+    if (r.checked_in_at) { setBusy(false); toast.warning("Already checked in"); return; }
+    // Atomic check-in: only succeeds if not already checked in (prevents double-scan races).
+    const now = new Date().toISOString();
+    const { data: updated, error } = await supabase
+      .from("rsvps")
+      .update({ checked_in_at: now })
+      .eq("id", r.id)
+      .is("checked_in_at", null)
+      .select("id");
+    if (error) { setBusy(false); return toast.error(error.message); }
+    if (!updated || !updated.length) { setBusy(false); toast.warning("Already checked in"); return; }
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) { setBusy(false); return toast.error("Not signed in"); }
+    // Audit log; survives reload for Undo last scan.
+    const { data: ci } = await supabase
+      .from("check_ins")
+      .insert({ rsvp_id: r.id, event_id: eventId, checker_id: auth.user.id, ticket_code: trimmed })
+      .select("id")
+      .maybeSingle();
     toast.success("Checked in");
-    setLastRsvpId(r.id);
+    if (ci) setLastScan({ rsvpId: r.id, checkInId: ci.id });
     setHistory((h) => [trimmed, ...h].slice(0, 10));
     setCode("");
+    setBusy(false);
     load();
   }
 
   async function undo() {
-    if (!lastRsvpId) return;
-    await supabase.from("rsvps").update({ checked_in_at: null }).eq("id", lastRsvpId);
-    setLastRsvpId(null);
+    if (!lastScan) {
+      // Recover last scan from check_ins (e.g. after page reload).
+      const { data } = await supabase
+        .from("check_ins")
+        .select("id, rsvp_id")
+        .eq("event_id", eventId)
+        .is("undone_at", null)
+        .order("checked_in_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!data) return toast.error("Nothing to undo");
+      await supabase.from("rsvps").update({ checked_in_at: null }).eq("id", data.rsvp_id);
+      const { data: auth2 } = await supabase.auth.getUser();
+      await supabase.from("check_ins").update({ undone_at: new Date().toISOString(), undone_by: auth2.user?.id ?? null }).eq("id", data.id);
+      toast.success("Undone");
+      load();
+      return;
+    }
+    await supabase.from("rsvps").update({ checked_in_at: null }).eq("id", lastScan.rsvpId);
+    const { data: auth3 } = await supabase.auth.getUser();
+    await supabase.from("check_ins").update({ undone_at: new Date().toISOString(), undone_by: auth3.user?.id ?? null }).eq("id", lastScan.checkInId);
+    setLastScan(null);
     toast.success("Undone");
     load();
   }
@@ -97,12 +133,10 @@ function CheckinBody({ eventId }: { eventId: string }) {
 
       <form onSubmit={(e) => { e.preventDefault(); checkIn(); }} className="flex gap-2 mb-4">
         <input className="flex-1 border rounded px-3 py-2 font-mono" placeholder="Ticket code" value={code} onChange={(e) => setCode(e.target.value)} autoFocus />
-        <button className="px-4 py-2 rounded bg-primary text-primary-foreground">Check in</button>
+        <button disabled={busy} className="px-4 py-2 rounded bg-primary text-primary-foreground disabled:opacity-50">Check in</button>
       </form>
 
-      {lastRsvpId && (
-        <button onClick={undo} className="text-sm underline mb-4">Undo last scan</button>
-      )}
+      <button onClick={undo} className="text-sm underline mb-4">Undo last scan</button>
 
       <div className="text-xs text-muted-foreground">
         <div className="font-semibold mb-1">Recent</div>
