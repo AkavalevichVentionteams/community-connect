@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { HostRoleGate } from "@/components/HostRoleGate";
 
 export const Route = createFileRoute("/host/$slug/invite")({
   component: InvitePage,
@@ -9,18 +10,22 @@ export const Route = createFileRoute("/host/$slug/invite")({
 
 function InvitePage() {
   const { slug } = Route.useParams();
-  const [host, setHost] = useState<any>(null);
+  return (
+    <HostRoleGate slug={slug} allow={["host"]} redirectPath={`/host/${slug}/invite`}>
+      {({ host }) => <InviteForm hostId={host.id} />}
+    </HostRoleGate>
+  );
+}
+
+function InviteForm({ hostId }: { hostId: string }) {
   const [role, setRole] = useState<"host" | "checker">("checker");
   const [link, setLink] = useState("");
 
-  useEffect(() => {
-    supabase.from("hosts").select("*").eq("slug", slug).maybeSingle().then(({ data }) => setHost(data));
-  }, [slug]);
-
   async function gen() {
-    if (!host) return;
     const token = crypto.randomUUID().replace(/-/g, "");
-    const { error } = await supabase.from("host_invites").insert({ host_id: host.id, token, role });
+    const { error } = await supabase
+      .from("host_invites")
+      .insert({ host_id: hostId, token, role });
     if (error) return toast.error(error.message);
     setLink(`${window.location.origin}/invite/${token}`);
   }
