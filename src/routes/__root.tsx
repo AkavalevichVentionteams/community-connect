@@ -9,6 +9,9 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import { AuthProvider, useAuth } from "@/lib/auth";
+import { Toaster } from "@/components/ui/sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 function NotFoundComponent() {
   return (
@@ -113,7 +116,49 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <AuthProvider>
+        <SiteHeader />
+        <main className="min-h-screen">
+          <Outlet />
+        </main>
+        <Toaster richColors position="top-right" />
+      </AuthProvider>
     </QueryClientProvider>
+  );
+}
+
+function SiteHeader() {
+  const { user } = useAuth();
+  return (
+    <header className="border-b bg-card/50 backdrop-blur sticky top-0 z-40">
+      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-4">
+        <Link to="/" className="font-bold text-lg tracking-tight text-primary">
+          Communa
+        </Link>
+        <nav className="flex gap-4 text-sm">
+          <Link to="/explore" activeProps={{ className: "font-semibold" }}>Explore</Link>
+          {user && <Link to="/tickets" activeProps={{ className: "font-semibold" }}>My Tickets</Link>}
+          {user && <Link to="/my-events" activeProps={{ className: "font-semibold" }}>My Events</Link>}
+        </nav>
+        <div className="ml-auto flex items-center gap-3 text-sm">
+          {user ? (
+            <>
+              <span className="text-muted-foreground hidden sm:inline">{user.email}</span>
+              <button
+                className="px-3 py-1.5 rounded-md border hover:bg-muted"
+                onClick={() => supabase.auth.signOut()}
+              >
+                Sign out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="px-3 py-1.5 rounded-md hover:bg-muted">Sign in</Link>
+              <Link to="/signup" className="px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:opacity-90">Sign up</Link>
+            </>
+          )}
+        </div>
+      </div>
+    </header>
   );
 }
