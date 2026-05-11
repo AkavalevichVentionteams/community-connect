@@ -3,8 +3,15 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+function safeRedirect(raw: unknown): string {
+  const v = typeof raw === "string" ? raw : "";
+  // Only allow same-origin internal paths (must start with "/" and not "//" or "/\").
+  if (!v || !v.startsWith("/") || v.startsWith("//") || v.startsWith("/\\")) return "/";
+  return v;
+}
+
 export const Route = createFileRoute("/login")({
-  validateSearch: (s: Record<string, unknown>) => ({ redirect: (s.redirect as string) || "/" }),
+  validateSearch: (s: Record<string, unknown>) => ({ redirect: safeRedirect(s.redirect) }),
   component: LoginPage,
 });
 
