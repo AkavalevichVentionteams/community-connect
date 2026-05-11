@@ -75,14 +75,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "AIChallenge2.0Task-2AKavalevich" },
+      { name: "description", content: "Community Connect is a lightweight platform for hosting and attending free community events." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "AIChallenge2.0Task-2AKavalevich" },
+      { property: "og:description", content: "Community Connect is a lightweight platform for hosting and attending free community events." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "AIChallenge2.0Task-2AKavalevich" },
+      { name: "twitter:description", content: "Community Connect is a lightweight platform for hosting and attending free community events." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5fd490e7-9413-4dd0-8fe3-3acd67241fa1/id-preview-91b04318--86567afc-0881-465c-bda8-69a84882bfbd.lovable.app-1778501127788.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5fd490e7-9413-4dd0-8fe3-3acd67241fa1/id-preview-91b04318--86567afc-0881-465c-bda8-69a84882bfbd.lovable.app-1778501127788.png" },
     ],
     links: [
       {
