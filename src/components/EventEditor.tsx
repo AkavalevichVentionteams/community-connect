@@ -46,7 +46,7 @@ export default function EventEditor({ slug, eventId, onSaved }: { slug: string; 
     const { error } = await supabase.storage.from("event-assets").upload(path, f);
     if (error) return toast.error(error.message);
     const { data } = supabase.storage.from("event-assets").getPublicUrl(path);
-    setForm((s) => ({ ...s, cover_url: data.publicUrl }));
+    setForm((s: any) => ({ ...s, cover_url: data.publicUrl }));
   }
 
   async function save(state?: "draft" | "published") {
@@ -73,7 +73,7 @@ export default function EventEditor({ slug, eventId, onSaved }: { slug: string; 
     setBusy(false);
     toast.success("Saved");
     if (id && onSaved) onSaved(id);
-    if (state) setForm((s) => ({ ...s, state }));
+    if (state) setForm((s: any) => ({ ...s, state }));
   }
 
   return (
