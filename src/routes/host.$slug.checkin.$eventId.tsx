@@ -91,27 +91,13 @@ function CheckinBody({ eventId }: { eventId: string }) {
   }
 
   async function undo() {
-    if (!lastScan) {
-      // Recover last scan from check_ins (e.g. after page reload).
-      const { data } = await supabase
-        .from("check_ins")
-        .select("id, rsvp_id")
-        .eq("event_id", eventId)
-        .is("undone_at", null)
-        .order("checked_in_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (!data) return toast.error("Nothing to undo");
-      await supabase.from("rsvps").update({ checked_in_at: null }).eq("id", data.rsvp_id);
-      const { data: auth2 } = await supabase.auth.getUser();
-      await supabase.from("check_ins").update({ undone_at: new Date().toISOString(), undone_by: auth2.user?.id ?? null }).eq("id", data.id);
-      toast.success("Undone");
-      load();
-      return;
-    }
+    // Spec: undo "the last scan" — one undo per scan only.
+    if (!lastScan) return toast.error("Nothing to undo");
     await supabase.from("rsvps").update({ checked_in_at: null }).eq("id", lastScan.rsvpId);
     const { data: auth3 } = await supabase.auth.getUser();
-    await supabase.from("check_ins").update({ undone_at: new Date().toISOString(), undone_by: auth3.user?.id ?? null }).eq("id", lastScan.checkInId);
+    await supabase.from("check_ins")
+      .update({ undone_at: new Date().toISOString(), undone_by: auth3.user?.id ?? null })
+      .eq("id", lastScan.checkInId);
     setLastScan(null);
     toast.success("Undone");
     load();
@@ -136,7 +122,7 @@ function CheckinBody({ eventId }: { eventId: string }) {
         <button disabled={busy} className="px-4 py-2 rounded bg-primary text-primary-foreground disabled:opacity-50">Check in</button>
       </form>
 
-      <button onClick={undo} className="text-sm underline mb-4">Undo last scan</button>
+      <button onClick={undo} disabled={!lastScan} className="text-sm underline mb-4 disabled:opacity-40 disabled:no-underline">Undo last scan</button>
 
       <div className="text-xs text-muted-foreground">
         <div className="font-semibold mb-1">Recent</div>
